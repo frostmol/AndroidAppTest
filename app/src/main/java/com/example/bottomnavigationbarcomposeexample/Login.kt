@@ -1,5 +1,6 @@
-package com.example.bottomnavigationbarcomposeexample.pages
+package com.example.bottomnavigationbarcomposeexample
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,7 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.bottomnavigationbarcomposeexample.NavigationItem
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginPage(navController: NavController) {
@@ -76,7 +79,34 @@ fun LoginPage(navController: NavController) {
 
         Box(modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp)) {
             Button(
-                onClick = {navController.navigate(NavigationItem.Home.route) },
+                onClick = {
+                    GlobalScope.launch(Dispatchers.Main) {
+                        val authManager = AuthManager()
+                        val result = authManager.signInWithEmailAndPassword(
+                            email = username.value.text,
+                            password = password.value.text
+                        )
+
+                        when (result) {
+                            is AuthResult.Success -> {
+                                // Выполните дополнительные действия при успешной аутентификации
+                                result.user?.let { user ->
+                                    Log.d("UserInfo", "Current user UID: ${user.uid}")
+                                    Log.d("UserInfo", "Email: ${user.email}")
+                                    Log.d("UserInfo", "Display Name: ${user.displayName}")
+
+                                    // Получаем дополнительные сведения о пользователе
+
+                                }
+                                navController.navigate(NavigationItem.Profile.route)
+                            }
+                            is AuthResult.Error -> {
+                                // Отобразите сообщение об ошибке
+                                // Например, showMessage(result.errorMessage)
+                            }
+                        }
+                    }
+                },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,3 +128,4 @@ fun LoginPage(navController: NavController) {
         )*/
     }
 }
+
