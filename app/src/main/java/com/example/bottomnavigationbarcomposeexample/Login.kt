@@ -87,24 +87,35 @@ fun LoginPage(navController: NavController) {
                             password = password.value.text
                         )
 
+                        // Assuming this is inside a coroutine scope or a suspending function
                         when (result) {
                             is AuthResult.Success -> {
+                                val user = result.user // Declare user here
+
                                 // Выполните дополнительные действия при успешной аутентификации
-                                result.user?.let { user ->
+                                user?.let { user ->
                                     Log.d("UserInfo", "Current user UID: ${user.uid}")
                                     Log.d("UserInfo", "Email: ${user.email}")
                                     Log.d("UserInfo", "Display Name: ${user.displayName}")
 
-                                    // Получаем дополнительные сведения о пользователе
+                                    // Call getUserDetails with the UID
+                                    getUserDetails(user.uid) { userDetails ->
+                                        // Handle the result here
+                                        userDetails?.let {
+                                            Log.d("UserInfo", "User Details: $userDetails")
+                                            // Now you can navigate to the profile screen or perform other actions
 
+                                        }
+                                    }
                                 }
                                 navController.navigate(NavigationItem.Profile.route)
                             }
                             is AuthResult.Error -> {
-                                // Отобразите сообщение об ошибке
-                                // Например, showMessage(result.errorMessage)
+                                // Handle authentication error
+                                Log.e("AuthManager", "Authentication error: ${result.errorMessage}")
                             }
                         }
+
                     }
                 },
                 shape = RoundedCornerShape(50.dp),
