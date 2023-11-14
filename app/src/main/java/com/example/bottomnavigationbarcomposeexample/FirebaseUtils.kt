@@ -10,6 +10,7 @@ data class StudentDetails(
     val studentAssignments: List<StudentAssignment>
 )
 
+
 data class TeacherDetails(
     val fullName: String,
     val subjects: List<String>,
@@ -43,8 +44,8 @@ data class AssignmentDetails(
 )
 
 
-// Function to get information about subjects a student is learning
-private fun getStudentSubjects(groupId: String, onResult: (List<String>?) -> Unit) {
+// Update getStudentSubjects to use the new getSubjectNames function
+private fun getStudentSubjects(groupId: String, onResult: (List<Pair<String, Pair<String, String>>>?) -> Unit) {
     val groupsReference: DatabaseReference = FirebaseDatabase.getInstance().getReference("Groups")
     groupsReference.child(groupId).child("subjects").addListenerForSingleValueEvent(object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
@@ -61,39 +62,69 @@ private fun getStudentSubjects(groupId: String, onResult: (List<String>?) -> Uni
     })
 }
 
+
+
+
 // Function to get subject names from the Subjects node
-private fun getSubjectNames(subjectIds: List<String>, onResult: (List<String>) -> Unit) {
+// Function to get subject names and teacher names from the Subjects node
+private fun getSubjectNames(subjectIds: List<String>, onResult: (List<Pair<String, Pair<String, String>>>?) -> Unit) {
     val subjectsReference: DatabaseReference = FirebaseDatabase.getInstance().getReference("Subjects")
 
-    val subjectNames = mutableListOf<String>()
+    val subjectNames = mutableListOf<Pair<String, Pair<String, String>>>()
 
     // Use a counter to track the number of subjects processed
     var subjectsProcessed = 0
 
     for (subjectId in subjectIds) {
-        val subjectNameSnapshot = subjectsReference.child(subjectId).child("subject_name")
-        subjectNameSnapshot.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(subjectSnapshot: DataSnapshot) {
-                val subjectName = subjectSnapshot.getValue(String::class.java)
-                subjectName?.let {
-                    subjectNames.add(it)
-                }
+        val subjectReference = subjectsReference.child(subjectId)
 
-                subjectsProcessed++
-                if (subjectsProcessed == subjectIds.size) {
-                    // All subjects processed, invoke the callback
-                    onResult(subjectNames)
+        subjectReference.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(subjectSnapshot: DataSnapshot) {
+                val subjectName = subjectSnapshot.child("subject_name").getValue(String::class.java)
+                val teacherId = subjectSnapshot.child("teacher_id").getValue(String::class.java)
+
+                if (subjectName != null && teacherId != null) {
+                    getTeacherFullName(teacherId) { teacherFullName ->
+                        subjectNames.add(Pair(subjectId, Pair(subjectName, teacherFullName)))
+
+                        subjectsProcessed++
+                        if (subjectsProcessed == subjectIds.size) {
+                            // All subjects processed, invoke the callback
+                            onResult(subjectNames)
+                        }
+                    }
+                } else {
+                    // Handle the case where subject name or teacher ID is null
+                    onResult(null)
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
                 // Handle error
-                onResult(emptyList())
+                onResult(null)
             }
         })
     }
 }
 
+
+
+// Function to get teacher full name for a given teacherId
+private fun getTeacherFullName(teacherId: String, onResult: (String) -> Unit) {
+    val teacherReference: DatabaseReference = FirebaseDatabase.getInstance().getReference("Users").child(teacherId)
+
+    teacherReference.child("full_name").addListenerForSingleValueEvent(object : ValueEventListener {
+        override fun onDataChange(teacherSnapshot: DataSnapshot) {
+            val teacherFullName = teacherSnapshot.getValue(String::class.java) ?: ""
+            onResult(teacherFullName)
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            // Handle error
+            onResult("") // Pass a default value in case of an error
+        }
+    })
+}
 
 // Function to get information about assignments for a student
 private fun getStudentAssignments(uid: String, onResult: (List<StudentAssignment>?) -> Unit) {
@@ -265,9 +296,10 @@ fun getUserDetails(uid: String, onResult: (Any?) -> Unit) {
                             Log.d("UserInfo", "Subjects: $subjects")
                             getStudentAssignments(uid) { studentAssignments ->
                                 Log.d("UserInfo", "Student Assignments: $studentAssignments")
-                                onResult(StudentDetails(fullName, groupName.orEmpty(), subjects.orEmpty(), studentAssignments.orEmpty()))
+                                onResult(StudentDetails(fullName, groupName.orEmpty(), subjects.orEmpty().map { it.first }, studentAssignments.orEmpty()))
                             }
                         }
+
                     }
                 }
                 "teacher" -> {
@@ -287,6 +319,8 @@ fun getUserDetails(uid: String, onResult: (Any?) -> Unit) {
 
     databaseReference.addValueEventListener(valueEventListener)
 }
+
+
 
 // Keep the getGroupName function unchanged
 private fun getGroupName(groupId: String, onResult: (String?) -> Unit) {

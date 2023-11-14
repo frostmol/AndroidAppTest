@@ -6,6 +6,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,6 +22,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen() {
@@ -36,12 +46,12 @@ fun HomeScreen() {
 
     }
 }
-
+/*
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     HomeScreen()
-}
+}*/
 
 @Composable
 fun BooksScreen() {
@@ -62,15 +72,15 @@ fun BooksScreen() {
     }
 }
 
-@Preview(showBackground = true)
+/*@Preview(showBackground = true)
 @Composable
 fun BooksScreenPreview() {
     BooksScreen()
-}
+}*/
 
 @Composable
-fun ProfileScreen() {
-
+fun ProfileScreen(authViewModel: AuthViewModel = viewModel()) {
+    val userDetails: StudentDetails? = authViewModel.currentUserDetails.value
 
     Column(
         modifier = Modifier
@@ -81,72 +91,31 @@ fun ProfileScreen() {
             modifier = Modifier
                 .padding(20.dp)
         ) {
-            // Верхняя часть: Фото в круге
             Box(
                 modifier = Modifier
                     .size(120.dp)
                     .padding(20.dp)
                     .background(Color.Gray, shape = CircleShape)
-
-            ) {
-                // Здесь можно использовать фактическую логику для загрузки фото
-                // Например: Image(...)
-            }
+            )
             Column(
                 modifier = Modifier
                     .padding(30.dp)
             ) {
-                Text("Иван Иванов", fontWeight = FontWeight.Bold,
+                Text(
+                    userDetails?.fullName ?: "",
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(5.dp)
                 )
-                Text("Группа: А123", fontWeight = FontWeight.Bold,
+                Text(
+                    "Группа: ${userDetails?.group}",
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(5.dp)
                 )
-            }
 
-        }
-
-
-        // Верхняя часть данных пользователя: ФИО и группа обучения
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Таблица с предметами и учителями
-        Table(
-            subjects = listOf("Математика", "Физика", "Информатика"),
-            teachers = listOf("Иванова", "Петров", "Сидоров")
-        )
-
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Composable
-fun Table(
-    subjects: List<String>,
-    teachers: List<String>
-) {
-    // Отобразить таблицу с предметами и учителями
-    // Можно использовать LazyColumn, LazyRow или другие компоненты Jetpack Compose
-    // для динамического отображения данных в зависимости от их количества
-    // Например:
-    LazyColumn {
-        items(subjects.size) { index ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            ) {
-                Text(text = subjects[index], fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(text = teachers[index])
             }
         }
     }
@@ -154,8 +123,21 @@ fun Table(
 
 
 
-@Preview(showBackground = true)
+
+
+
+
+
+
+
+
+/*@Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
-    ProfileScreen()
-}
+
+    ProfileScreen(userUid = "dummyUserId")
+}*/
+
+
+
+

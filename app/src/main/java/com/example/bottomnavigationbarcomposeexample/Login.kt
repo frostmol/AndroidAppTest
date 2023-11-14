@@ -18,29 +18,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.bottomnavigationbarcomposeexample.NavigationItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
+
 @Composable
-fun LoginPage(navController: NavController) {
-    /*Box(modifier = Modifier.fillMaxSize()) {
-        ClickableText(
-            text = AnnotatedString("Signup Here"),
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(20.dp),
-            onClick = { navController.navigate("signup") },
-            style = TextStyle(
-                fontSize = 14.sp,
-                fontFamily = FontFamily.Default,
-                textDecoration = TextDecoration.Underline,
-                color = Purple700
-            )
-        )
-    }*/
+fun LoginPage(navController: NavController, authViewModel: AuthViewModel) {
     Column(
         modifier = Modifier.padding(20.dp),
         verticalArrangement = Arrangement.Center,
@@ -87,35 +74,29 @@ fun LoginPage(navController: NavController) {
                             password = password.value.text
                         )
 
-                        // Assuming this is inside a coroutine scope or a suspending function
                         when (result) {
                             is AuthResult.Success -> {
-                                val user = result.user // Declare user here
+                                val user = result.user
 
-                                // Выполните дополнительные действия при успешной аутентификации
-                                user?.let { user ->
-                                    Log.d("UserInfo", "Current user UID: ${user.uid}")
-                                    Log.d("UserInfo", "Email: ${user.email}")
-                                    Log.d("UserInfo", "Display Name: ${user.displayName}")
-
-                                    // Call getUserDetails with the UID
-                                    getUserDetails(user.uid) { userDetails ->
-                                        // Handle the result here
-                                        userDetails?.let {
-                                            Log.d("UserInfo", "User Details: $userDetails")
-                                            // Now you can navigate to the profile screen or perform other actions
-
+                                getUserDetails(user?.uid.orEmpty()) { userDetails ->
+                                    when (userDetails) {
+                                        is StudentDetails -> {
+                                            authViewModel.setCurrentUserDetails(userDetails)
+                                            navController.navigate(NavigationItem.Profile.route)
+                                        }
+                                        is TeacherDetails -> {
+                                            // Handle teacher details if needed
+                                        }
+                                        else -> {
+                                            // Handle other cases
                                         }
                                     }
                                 }
-                                navController.navigate(NavigationItem.Profile.route)
                             }
                             is AuthResult.Error -> {
-                                // Handle authentication error
                                 Log.e("AuthManager", "Authentication error: ${result.errorMessage}")
                             }
                         }
-
                     }
                 },
                 shape = RoundedCornerShape(50.dp),
@@ -126,17 +107,6 @@ fun LoginPage(navController: NavController) {
                 Text(text = "Login")
             }
         }
-
-        Spacer(modifier = Modifier.height(15.dp))
-
-        /*ClickableText(
-            text = AnnotatedString("Forgot Password?"),
-            onClick = { navController.navigate("forgot-password") },
-            style = TextStyle(
-                fontSize = 15.sp,
-                fontFamily = FontFamily.Default
-            )
-        )*/
     }
 }
 
