@@ -79,6 +79,29 @@ fun BooksScreenPreview() {
 }*/
 
 @Composable
+fun SubjectDetailsList(subjects: List<SubjectDetails>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Предметы:",
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        subjects.forEach { subject ->
+            Text(
+                text = "Предмет: ${subject.subjectName}, Преподаватель: ${subject.teacherName}",
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
 fun ProfileScreen(authViewModel: AuthViewModel = viewModel()) {
     val userDetails: StudentDetails? = authViewModel.currentUserDetails.value
 
@@ -116,10 +139,13 @@ fun ProfileScreen(authViewModel: AuthViewModel = viewModel()) {
                         .padding(5.dp)
                 )
 
+                // Display the subject details
+                userDetails?.subjects?.let { SubjectDetailsList(it) }
             }
         }
     }
 }
+
 
 
 

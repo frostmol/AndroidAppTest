@@ -3,10 +3,15 @@ package com.example.bottomnavigationbarcomposeexample
 import android.util.Log
 import com.google.firebase.database.*
 
+data class SubjectDetails(
+    val subjectName: String,
+    val teacherName: String
+)
+
 data class StudentDetails(
     val fullName: String,
     val group: String?,
-    val subjects: List<String>,
+    val subjects: List<SubjectDetails>,
     val studentAssignments: List<StudentAssignment>
 )
 
@@ -45,13 +50,13 @@ data class AssignmentDetails(
 
 
 // Update getStudentSubjects to use the new getSubjectNames function
-private fun getStudentSubjects(groupId: String, onResult: (List<Pair<String, Pair<String, String>>>?) -> Unit) {
+private fun getStudentSubjects(groupId: String, onResult: (List<SubjectDetails>?) -> Unit) {
     val groupsReference: DatabaseReference = FirebaseDatabase.getInstance().getReference("Groups")
     groupsReference.child(groupId).child("subjects").addListenerForSingleValueEvent(object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
             val subjectIds = snapshot.children.mapNotNull { it.key }.toList()
-            getSubjectNames(subjectIds) { subjectNames ->
-                onResult(subjectNames)
+            getSubjectNames(subjectIds) { subjectDetails ->
+                onResult(subjectDetails)
             }
         }
 
@@ -67,10 +72,10 @@ private fun getStudentSubjects(groupId: String, onResult: (List<Pair<String, Pai
 
 // Function to get subject names from the Subjects node
 // Function to get subject names and teacher names from the Subjects node
-private fun getSubjectNames(subjectIds: List<String>, onResult: (List<Pair<String, Pair<String, String>>>?) -> Unit) {
+private fun getSubjectNames(subjectIds: List<String>, onResult: (List<SubjectDetails>?) -> Unit) {
     val subjectsReference: DatabaseReference = FirebaseDatabase.getInstance().getReference("Subjects")
 
-    val subjectNames = mutableListOf<Pair<String, Pair<String, String>>>()
+    val subjectDetails = mutableListOf<SubjectDetails>()
 
     // Use a counter to track the number of subjects processed
     var subjectsProcessed = 0
@@ -85,12 +90,12 @@ private fun getSubjectNames(subjectIds: List<String>, onResult: (List<Pair<Strin
 
                 if (subjectName != null && teacherId != null) {
                     getTeacherFullName(teacherId) { teacherFullName ->
-                        subjectNames.add(Pair(subjectId, Pair(subjectName, teacherFullName)))
+                        subjectDetails.add(SubjectDetails(subjectName, teacherFullName))
 
                         subjectsProcessed++
                         if (subjectsProcessed == subjectIds.size) {
                             // All subjects processed, invoke the callback
-                            onResult(subjectNames)
+                            onResult(subjectDetails)
                         }
                     }
                 } else {
@@ -296,7 +301,9 @@ fun getUserDetails(uid: String, onResult: (Any?) -> Unit) {
                             Log.d("UserInfo", "Subjects: $subjects")
                             getStudentAssignments(uid) { studentAssignments ->
                                 Log.d("UserInfo", "Student Assignments: $studentAssignments")
-                                onResult(StudentDetails(fullName, groupName.orEmpty(), subjects.orEmpty().map { it.first }, studentAssignments.orEmpty()))
+                                onResult(StudentDetails(fullName, groupName.orEmpty(), subjects.orEmpty(), studentAssignments.orEmpty()))
+
+
                             }
                         }
 
