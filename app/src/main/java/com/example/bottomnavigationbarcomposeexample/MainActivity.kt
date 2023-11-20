@@ -70,7 +70,7 @@ fun Navigation(navController: NavHostController, authViewModel: AuthViewModel) {
     NavHost(navController, startDestination = "login") {
         composable("login") { LoginPage(navController, authViewModel) }
         composable(NavigationItem.Home.route) { HomeScreen() }
-        composable(NavigationItem.Books.route) { BooksScreen() }
+        composable(NavigationItem.Books.route) { BooksScreen(authViewModel) }
         composable(NavigationItem.Profile.route) { ProfileScreen(authViewModel) }
     }
 }
@@ -95,7 +95,6 @@ fun TopBarPreview() {
 @Composable
 fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
-        NavigationItem.Home,
         NavigationItem.Books,
         NavigationItem.Profile
     )

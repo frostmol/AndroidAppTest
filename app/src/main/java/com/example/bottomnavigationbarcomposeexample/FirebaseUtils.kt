@@ -9,11 +9,13 @@ data class SubjectDetails(
 )
 
 data class StudentDetails(
+    val uid: String, // Добавлено новое поле для хранения UID
     val fullName: String,
     val group: String?,
     val subjects: List<SubjectDetails>,
     val studentAssignments: List<StudentAssignment>
 )
+
 
 
 data class TeacherDetails(
@@ -301,7 +303,7 @@ fun getUserDetails(uid: String, onResult: (Any?) -> Unit) {
                             Log.d("UserInfo", "Subjects: $subjects")
                             getStudentAssignments(uid) { studentAssignments ->
                                 Log.d("UserInfo", "Student Assignments: $studentAssignments")
-                                onResult(StudentDetails(fullName, groupName.orEmpty(), subjects.orEmpty(), studentAssignments.orEmpty()))
+                                onResult(StudentDetails(uid, fullName, groupName.orEmpty(), subjects.orEmpty(), studentAssignments.orEmpty()))
 
 
                             }
